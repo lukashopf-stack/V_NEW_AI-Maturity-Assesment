@@ -1,10 +1,968 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>AI Maturity Assessment</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AI Readiness Assessment · ARCMM</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#F5F5F7;
+  --surface:#FFFFFF;
+  --text:#1D1D1F;
+  --text-muted:#6E6E73;
+  --text-faint:#86868B;
+  --border:#D2D2D7;
+  --accent:#0071E3;
+  --accent-hover:#0077ED;
+  --radius:24px;
+  --radius-sm:12px;
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
+  --shadow:0 2px 16px rgba(0,0,0,.04);
+  --shadow-sm:0 1px 4px rgba(0,0,0,.03);
+}
+
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#000000;
+    --surface:#1D1D1F;
+    --text:#F5F5F7;
+    --text-muted:#A1A1A6;
+    --text-faint:#6E6E73;
+    --border:#424245;
+    --accent:#0A84FF;
+    --accent-hover:#409CFF;
+  }
+}
+
+html,body{
+  height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font);
+  font-size:17px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+
+.container{
+  max-width:960px;
+  margin:0 auto;
+  padding:80px 24px;
+}
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:48px;
+  box-shadow:var(--shadow);
+  margin-bottom:24px;
+}
+
+@media(max-width:768px){
+  .container{padding:48px 16px}
+  .card{padding:32px 24px}
+}
+
+.header{
+  text-align:center;
+  margin-bottom:64px;
+}
+
+.header h1{
+  font-size:48px;
+  font-weight:600;
+  letter-spacing:-.02em;
+  margin-bottom:12px;
+  line-height:1.1;
+}
+
+.header p{
+  font-size:19px;
+  color:var(--text-muted);
+  font-weight:400;
+  margin-bottom:8px;
+}
+
+.header .meta{
+  font-size:15px;
+  color:var(--text-faint);
+  font-weight:400;
+}
+
+.lang-switch{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  margin-top:24px;
+}
+
+.lang-btn{
+  padding:8px 20px;
+  border:1px solid var(--border);
+  border-radius:20px;
+  background:transparent;
+  color:var(--text-muted);
+  font-size:15px;
+  font-weight:500;
+  cursor:pointer;
+  transition:all .2s;
+  font-family:var(--font);
+}
+
+.lang-btn.active{
+  background:var(--accent);
+  color:#fff;
+  border-color:var(--accent);
+}
+
+.section{
+  margin-bottom:56px;
+}
+
+.section-title{
+  font-size:28px;
+  font-weight:600;
+  margin-bottom:24px;
+  letter-spacing:-.01em;
+}
+
+.label{
+  font-size:13px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--text-faint);
+  margin-bottom:12px;
+}
+
+.form-group{
+  margin-bottom:24px;
+}
+
+.form-group label{
+  display:block;
+  font-size:15px;
+  font-weight:500;
+  margin-bottom:8px;
+  color:var(--text);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea{
+  width:100%;
+  padding:12px 16px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--bg);
+  color:var(--text);
+  font-size:17px;
+  font-family:var(--font);
+  transition:border-color .2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus{
+  outline:none;
+  border-color:var(--accent);
+}
+
+.form-group textarea{
+  min-height:120px;
+  resize:vertical;
+  line-height:1.5;
+}
+
+.btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:12px 24px;
+  border-radius:24px;
+  border:none;
+  background:var(--accent);
+  color:#fff;
+  font-size:17px;
+  font-weight:500;
+  cursor:pointer;
+  font-family:var(--font);
+  transition:all .2s;
+  white-space:nowrap;
+}
+
+.btn:hover{
+  background:var(--accent-hover);
+  transform:translateY(-1px);
+}
+
+.btn-secondary{
+  background:var(--bg);
+  color:var(--text);
+  border:1px solid var(--border);
+}
+
+.btn-secondary:hover{
+  background:var(--surface);
+  transform:translateY(-1px);
+}
+
+.btn-group{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.question{
+  margin-bottom:40px;
+  padding-bottom:40px;
+  border-bottom:1px solid var(--border);
+}
+
+.question:last-child{
+  border-bottom:none;
+  padding-bottom:0;
+  margin-bottom:0;
+}
+
+.question-header{
+  margin-bottom:16px;
+}
+
+.question-lens{
+  display:inline-block;
+  font-size:12px;
+  font-weight:600;
+  padding:4px 12px;
+  border-radius:12px;
+  margin-bottom:12px;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+
+.question-text{
+  font-size:21px;
+  font-weight:600;
+  margin-bottom:8px;
+  line-height:1.3;
+}
+
+.question-desc{
+  font-size:17px;
+  color:var(--text-muted);
+  line-height:1.5;
+  margin-bottom:20px;
+}
+
+.options{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+}
+
+.option{
+  padding:12px 20px;
+  border:1px solid var(--border);
+  border-radius:20px;
+  background:var(--bg);
+  color:var(--text);
+  font-size:17px;
+  font-weight:500;
+  cursor:pointer;
+  transition:all .2s;
+  font-family:var(--font);
+}
+
+.option:hover{
+  border-color:var(--accent);
+  background:var(--surface);
+}
+
+.option.selected{
+  background:var(--accent);
+  color:#fff;
+  border-color:var(--accent);
+}
+
+.option.unable.selected{
+  background:var(--text-faint);
+  border-color:var(--text-faint);
+}
+
+.progress{
+  margin-bottom:40px;
+}
+
+.progress-bar{
+  height:4px;
+  background:var(--border);
+  border-radius:2px;
+  overflow:hidden;
+  margin-bottom:12px;
+}
+
+.progress-fill{
+  height:100%;
+  background:var(--accent);
+  transition:width .3s;
+}
+
+.progress-text{
+  font-size:15px;
+  color:var(--text-muted);
+  text-align:center;
+}
+
+.login-screen{
+  position:fixed;
+  inset:0;
+  background:var(--bg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+.login-card{
+  max-width:440px;
+  width:100%;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:48px;
+  box-shadow:var(--shadow);
+}
+
+.login-card h2{
+  font-size:32px;
+  font-weight:600;
+  margin-bottom:8px;
+  letter-spacing:-.01em;
+}
+
+.login-card p{
+  font-size:17px;
+  color:var(--text-muted);
+  margin-bottom:32px;
+}
+
+.error-msg{
+  display:none;
+  padding:12px 16px;
+  background:#FEE2E2;
+  color:#DC2626;
+  border-radius:var(--radius-sm);
+  font-size:15px;
+  margin-top:16px;
+}
+
+.error-msg.show{
+  display:block;
+}
+
+.hidden{
+  display:none;
+}
+
+.screen{
+  display:none;
+}
+
+.screen.active{
+  display:block;
+}
+
+.back-link{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  color:var(--accent);
+  font-size:17px;
+  font-weight:500;
+  text-decoration:none;
+  margin-bottom:32px;
+  cursor:pointer;
+}
+
+.back-link:hover{
+  opacity:.8;
+}
+
+.respondent-list{
+  display:grid;
+  gap:16px;
+  margin-bottom:24px;
+}
+
+.respondent-item{
+  padding:20px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--bg);
+  cursor:pointer;
+  transition:all .2s;
+}
+
+.respondent-item:hover{
+  border-color:var(--accent);
+  transform:translateY(-2px);
+  box-shadow:var(--shadow-sm);
+}
+
+.respondent-name{
+  font-size:19px;
+  font-weight:600;
+  margin-bottom:4px;
+}
+
+.respondent-role{
+  font-size:15px;
+  color:var(--text-muted);
+  margin-bottom:12px;
+}
+
+.respondent-status{
+  display:inline-block;
+  font-size:13px;
+  padding:4px 12px;
+  border-radius:12px;
+  font-weight:500;
+}
+
+.status-complete{
+  background:#DCFCE7;
+  color:#15803D;
+}
+
+.status-partial{
+  background:#FEF3C7;
+  color:#92400E;
+}
+
+.status-empty{
+  background:var(--border);
+  color:var(--text-muted);
+}
+
+.cap-section{
+  margin-bottom:56px;
+}
+
+.cap-header{
+  font-size:24px;
+  font-weight:600;
+  margin-bottom:32px;
+  padding-bottom:16px;
+  border-bottom:1px solid var(--border);
+}
+
+footer{
+  text-align:center;
+  padding:48px 24px;
+  font-size:13px;
+  color:var(--text-faint);
+  border-top:1px solid var(--border);
+  margin-top:80px;
+}
+</style>
 </head>
 <body>
-    <h1>Welcome to the AI Maturity Assessment</h1>
-    <p>This is an index page for the AI maturity assessment tool.</p>
+
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <h2>Sign In</h2>
+    <p>Please sign in to access the AI readiness assessment.</p>
+    
+    <div class="form-group">
+      <label for="login-user">Username</label>
+      <input type="text" id="login-user" autocomplete="username" />
+    </div>
+    
+    <div class="form-group">
+      <label for="login-pass">Password</label>
+      <input type="password" id="login-pass" autocomplete="current-password" />
+    </div>
+    
+    <button class="btn" style="width:100%;justify-content:center" onclick="handleLogin()">Sign In</button>
+    
+    <div id="login-error" class="error-msg">
+      Incorrect username or password.
+    </div>
+  </div>
+</div>
+
+<div class="container hidden" id="app-root">
+
+<div id="screen-home" class="screen active">
+  <div class="header">
+    <h1>AI Readiness Assessment</h1>
+    <p>Organizational AI Readiness Capability Maturity Model</p>
+    <p class="meta">ARCMM · March 2026</p>
+    <div class="lang-switch">
+      <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" id="btn-de" onclick="setLang('de')">DE</button>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="section">
+      <p style="font-size:17px;color:var(--text-muted);line-height:1.6;text-align:center;max-width:720px;margin:0 auto;" data-en="This assessment evaluates your organization's AI readiness across five capability areas, viewed through three lenses: individual actors, digital technologies, and interactional patterns." data-de="Diese Erhebung bewertet die KI-Bereitschaft Ihrer Organisation in fünf Fähigkeitsbereichen, betrachtet durch drei Linsen: individuelle Akteure, digitale Technologien und Interaktionsmuster.">This assessment evaluates your organization's AI readiness across five capability areas, viewed through three lenses: individual actors, digital technologies, and interactional patterns.</p>
+    </div>
+  </div>
+
+  <div class="card" id="admin-section" style="display:none">
+    <div class="section">
+      <h2 class="section-title" data-en="All Respondents" data-de="Alle Befragten">All Respondents</h2>
+      <div id="admin-list"></div>
+    </div>
+    <div class="btn-group" style="margin-top:32px">
+      <button class="btn" onclick="showResults()" data-en="View Results" data-de="Ergebnisse anzeigen">View Results</button>
+      <button class="btn btn-secondary" onclick="exportData()" data-en="Export JSON" data-de="JSON exportieren">Export JSON</button>
+      <button class="btn btn-secondary" onclick="resetAll()" data-en="Reset All" data-de="Alles zurücksetzen">Reset All</button>
+    </div>
+  </div>
+
+  <div class="card" id="guest-section" style="display:none">
+    <div class="section">
+      <h2 class="section-title" data-en="Start Assessment" data-de="Bewertung starten">Start Assessment</h2>
+      <div class="form-group">
+        <label data-en="Full Name" data-de="Vollständiger Name">Full Name</label>
+        <input type="text" id="guest-name" />
+      </div>
+      <div class="form-group">
+        <label data-en="Role / Title" data-de="Funktion / Titel">Role / Title</label>
+        <input type="text" id="guest-role" />
+      </div>
+      <button class="btn" onclick="startGuestSurvey()" data-en="Begin Survey" data-de="Befragung starten">Begin Survey</button>
+    </div>
+  </div>
+</div>
+
+<div id="screen-survey" class="screen">
+  <a class="back-link" onclick="goHome()">← <span data-en="Back" data-de="Zurück">Back</span></a>
+  
+  <div class="header" style="margin-bottom:48px">
+    <h1 style="font-size:32px" id="survey-who"></h1>
+    <p id="survey-org"></p>
+  </div>
+  
+  <div class="card">
+    <div class="progress">
+      <div class="progress-bar">
+        <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+      </div>
+      <div class="progress-text" id="prog-label">0 / 25</div>
+    </div>
+    
+    <div id="survey-body"></div>
+    
+    <div style="margin-top:48px;text-align:center">
+      <button class="btn" onclick="completeSurvey()" data-en="Save Responses" data-de="Antworten speichern">Save Responses</button>
+    </div>
+  </div>
+</div>
+
+<div id="screen-results" class="screen">
+  <a class="back-link" onclick="goHome()">← <span data-en="Back" data-de="Zurück">Back</span></a>
+  
+  <div class="header">
+    <h1 style="font-size:32px" data-en="Results" data-de="Ergebnisse">Results</h1>
+  </div>
+  
+  <div class="card">
+    <div id="results-body"></div>
+  </div>
+</div>
+
+</div>
+
+<footer>ARCMM · AI Readiness Capability Maturity Model · Copenhagen Business School · 2026</footer>
+
+<script>
+let lang = 'en';
+let userRole = null;
+let currentUserId = null;
+let supabase = null;
+
+const ADMIN_USER = 'AnjaLukas';
+const ADMIN_PASS = 'Copenhagen1!';
+const GUEST_USER = 'guest';
+const GUEST_PASS = 'guest123';
+
+const SUPABASE_URL = 'https://lrilgfxclkqgazqgcslc.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_MNi9l3SkjPvU-m67sxqTrQ_VfZQYT6j';
+
+const T = {
+  respondents: { de:'Befragte', en:'Respondents' },
+  complete: { de:'✓ Vollständig', en:'✓ Complete' },
+  notStarted: { de:'Nicht begonnen', en:'Not started' },
+  questionsLeft: { de:'Fragen verbleibend', en:'questions remaining' },
+  allAnswered: { de:'Alle Fragen beantwortet.', en:'All questions answered.' },
+  unable: { de:'Kann nicht beantworten', en:'Unable to answer' },
+  noRoleSpec: { de:'Keine Funktion angegeben', en:'No role specified' },
+};
+
+function t(key) { return T[key] ? T[key][lang] : key; }
+function l(obj) { return obj[lang] || obj['en'] || ''; }
+
+const CAP = [
+  { id:'c1', name:{ en:'AI Strategy & Portfolio Management', de:'KI-Strategie & Portfoliomanagement' }, color:'#0071E3' },
+  { id:'c2', name:{ en:'AI Delivery & Technical Architecture', de:'KI-Bereitstellung & Technologiearchitektur' }, color:'#0A84FF' },
+  { id:'c3', name:{ en:'AI Data Accessibility & Management', de:'KI-Datenzugang & -management' }, color:'#5E5CE6' },
+  { id:'c4', name:{ en:'AI Coordination & Governance', de:'KI-Koordination & Governance' }, color:'#30D158' },
+  { id:'c5', name:{ en:'AI Ethics & Risks', de:'KI-Ethik & Risiken' }, color:'#FF9F0A' },
+];
+
+const LENS = [
+  { id:'ia', name:{ en:'Individual Actors', de:'Individuelle Akteure' }, color:'#007AFF' },
+  { id:'dt', name:{ en:'Digital Technologies', de:'Digitale Technologien' }, color:'#5856D6' },
+  { id:'ip', name:{ en:'Interactional Patterns', de:'Interaktionsmuster' }, color:'#34C759' },
+];
+
+const QS = [
+  { id:'q01', c:'c1', l:'ia', text:{ en:'To what extent do individual actors understand AI opportunities?', de:'Inwieweit verstehen die einzelnen Akteure KI-Chancen?' }, desc:{ en:'The ability to understand the current capabilities and limitations of AI technology and recognize which business problems are suitable for AI solutions.', de:'Die Fähigkeit, die aktuellen Möglichkeiten und Grenzen der KI-Technologie zu verstehen und zu erkennen, welche geschäftlichen Probleme für KI-Lösungen geeignet sind.' }, opts:{ en:['Little','Basic','Solid','Advanced','Mature'], de:['Gering','Grundlegend','Solide','Fortgeschritten','Ausgereift'] } },
+  { id:'q02', c:'c1', l:'ia', text:{ en:'To what extent do individual actors contribute to prioritization?', de:'Inwieweit tragen die einzelnen Akteure zur Priorisierung bei?' }, desc:{ en:'The extent to which relevant actors actively provide input for evaluating and ranking AI initiatives.', de:'Das Ausmaß, in dem relevante Akteure aktiv Beiträge zur Bewertung und Priorisierung von KI-Initiativen leisten.' }, opts:{ en:['Limited','Occasional','Regular','Consistent','Proactive'], de:['Begrenzt','Gelegentlich','Regelmäßig','Konsistent','Proaktiv'] } },
+  { id:'q03', c:'c1', l:'ip', text:{ en:'To what extent are portfolio decision routines established?', de:'Inwieweit sind Portfolio-Entscheidungsroutinen etabliert?' }, desc:{ en:'The organizational procedures and governance processes through which AI initiatives are approved, rejected, paused, scaled, or discontinued.', de:'Die organisatorischen Verfahren und Governance-Prozesse, durch die KI-Initiativen genehmigt, abgelehnt, pausiert, skaliert oder eingestellt werden.' }, opts:{ en:['Absent','Ad hoc','Formalized','Structured','Continuous'], de:['Nicht vorhanden','Ad hoc','Formalisiert','Strukturiert','Kontinuierlich'] } },
+  { id:'q04', c:'c1', l:'ip', text:{ en:'To what extent is the AI portfolio linked to strategic goals?', de:'Inwieweit ist das KI-Portfolio mit strategischen Zielen verknüpft?' }, desc:{ en:'The degree to which the selection, steering, and continuation of AI initiatives are aligned with the organization\'s overarching strategic objectives and priorities.', de:'Der Grad, in dem die Auswahl, Steuerung und Weiterführung von KI-Initiativen mit den übergeordneten strategischen Zielen der Organisation übereinstimmt.' }, opts:{ en:['Absent','Implicit','Partial','Consistent','Seamless'], de:['Nicht vorhanden','Implizit','Partiell','Konsistent','Nahtlos'] } },
+  { id:'q05', c:'c2', l:'ia', text:{ en:'To what extent do technical roles have AI solution-building skills?', de:'Inwieweit verfügen technische Rollen über KI-Lösungsentwicklungsfähigkeiten?' }, desc:{ en:'The technical competencies required to develop AI models, including data preparation, algorithm/model selection, use-case development, testing, and validation.', de:'Die technischen Kompetenzen zur Entwicklung von KI-Modellen, einschließlich Datenvorbereitung, Algorithmus-/Modellauswahl, Use-Case-Entwicklung, Test und Validierung.' }, opts:{ en:['Absent','Emerging','Present','Consistent','Value-delivering'], de:['Nicht vorhanden','Entstehend','Vorhanden','Konsistent','Wertschöpfend'] } },
+  { id:'q06', c:'c2', l:'ia', text:{ en:'To what extent do technical roles have operationalization skills?', de:'Inwieweit verfügen technische Rollen über Operationalisierungskompetenzen?' }, desc:{ en:'The technical competencies required to transition AI use-cases from development into production use, including deployment and integration.', de:'Die technischen Kompetenzen, die erforderlich sind, um KI-Use-Cases vom Entwicklungsstadium in den Produktionseinsatz zu überführen, einschließlich Deployment und Integration.' }, opts:{ en:['Absent','Emerging','Present','Consistent','Value-delivering'], de:['Nicht vorhanden','Entstehend','Vorhanden','Konsistent','Wertschöpfend'] } },
+  { id:'q07', c:'c2', l:'dt', text:{ en:'To what extent are version control & deployment pipelines established?', de:'Inwieweit sind Versionskontrolle und Deployment-Pipelines etabliert?' }, desc:{ en:'The technical systems and processes for managing code versions, tracking changes, and automating the deployment of AI models into production environments.', de:'Die technischen Systeme und Prozesse zur Verwaltung von Code-Versionen, Nachverfolgung von Änderungen und Automatisierung des Deployments von KI-Modellen in Produktionsumgebungen.' }, opts:{ en:['Absent','Basic','Functional','Standardized','Automated'], de:['Nicht vorhanden','Grundlegend','Funktionsfähig','Standardisiert','Automatisiert'] } },
+  { id:'q08', c:'c2', l:'dt', text:{ en:'To what extent are solution monitoring tools established?', de:'Inwieweit sind Lösungsüberwachungstools etabliert?' }, desc:{ en:'The technical systems and processes for tracking AI model performance, detecting issues such as model drift, and ensuring continuous reliability in production.', de:'Die technischen Systeme und Prozesse zur Überwachung der KI-Modellleistung, Erkennung von Problemen wie Model Drift und Sicherstellung kontinuierlicher Zuverlässigkeit im Produktionsbetrieb.' }, opts:{ en:['Absent','Informal','Functional','Standardized','Automated'], de:['Nicht vorhanden','Informell','Funktionsfähig','Standardisiert','Automatisiert'] } },
+  { id:'q09', c:'c2', l:'ip', text:{ en:'To what extent are AI delivery practices established?', de:'Inwieweit sind KI-Bereitstellungspraktiken etabliert?' }, desc:{ en:'The standardized organizational processes and workflows for moving AI solutions through development, testing, deployment, and maintenance stages.', de:'Die standardisierten organisatorischen Prozesse und Workflows zur Entwicklung, Testung, Deployment und Wartung von KI-Lösungen.' }, opts:{ en:['Absent','Basic','Structured','Standardized','Continuously improved'], de:['Nicht vorhanden','Grundlegend','Strukturiert','Standardisiert','Kontinuierlich verbessert'] } },
+  { id:'q10', c:'c2', l:'ip', text:{ en:'To what extent are IT & business functions coordinated in AI delivery?', de:'Inwieweit sind IT- und Geschäftsfunktionen bei der KI-Bereitstellung koordiniert?' }, desc:{ en:'The collaboration and alignment between IT teams and business throughout the AI delivery lifecycle, from requirements gathering to deployment and maintenance.', de:'Die Zusammenarbeit und Abstimmung zwischen IT-Teams und Geschäftsbereichen über den gesamten KI-Bereitstellungslebenszyklus hinweg, von der Anforderungserfassung bis zu Deployment und Wartung.' }, opts:{ en:['Absent','Reactive','Consistent','Embedded','Proactive'], de:['Nicht vorhanden','Reaktiv','Konsistent','Eingebettet','Proaktiv'] } },
+  { id:'q11', c:'c4', l:'ia', text:{ en:'To what extent are roles & responsibilities for AI projects clear to individual actors?', de:'Inwieweit sind Rollen und Verantwortlichkeiten für KI-Projekte den einzelnen Akteuren klar?' }, desc:{ en:'The extent to which it is clearly defined who is accountable for AI-related tasks, including strategic oversight, project delivery, data governance, and operational responsibilities.', de:'Das Ausmaß, in dem klar definiert ist, wer für KI-bezogene Aufgaben verantwortlich ist, einschließlich strategischer Aufsicht, Projektdurchführung, Daten-Governance und operativer Verantwortlichkeiten.' }, opts:{ en:['Absent','Basic','Established','Consistent','Embedded'], de:['Nicht vorhanden','Grundlegend','Etabliert','Konsistent','Eingebettet'] } },
+  { id:'q12', c:'c4', l:'ia', text:{ en:'To what extent are decision rights for AI clear to individual actors?', de:'Inwieweit sind Entscheidungsbefugnisse für KI den einzelnen Akteuren klar?' }, desc:{ en:'The extent to which it is clearly defined who has the authority to make decisions about AI initiatives, including approvals, resource allocation, prioritization, and project continuation or termination.', de:'Das Ausmaß, in dem klar definiert ist, wer die Befugnis hat, Entscheidungen über KI-Initiativen zu treffen, einschließlich Genehmigungen, Ressourcenzuteilung, Priorisierung und Projektfortsetzung oder -abbruch.' }, opts:{ en:['Absent','Basic','Established','Consistent','Embedded'], de:['Nicht vorhanden','Grundlegend','Etabliert','Konsistent','Eingebettet'] } },
+  { id:'q13', c:'c4', l:'ip', text:{ en:'To what extent are decision rights & processes for AI established?', de:'Inwieweit sind Entscheidungsbefugnisse und -prozesse für KI etabliert?' }, desc:{ en:'The governance structures and approval mechanisms through which AI-project decisions are made, escalated, and documented across the organization.', de:'Die Governance-Strukturen und Genehmigungsmechanismen, durch die Entscheidungen zu KI-Projekten getroffen, eskaliert und dokumentiert werden.' }, opts:{ en:['Absent','Informal','Defined','Consistently applied','Continuously improved'], de:['Nicht vorhanden','Informell','Definiert','Konsistent angewendet','Kontinuierlich verbessert'] } },
+  { id:'q14', c:'c4', l:'ip', text:{ en:'To what extent are relevant stakeholders involved in AI-related decisions and activities?', de:'Inwieweit sind relevante Stakeholder in KI-bezogene Entscheidungen und Aktivitäten eingebunden?' }, desc:{ en:'The extent to which relevant organizational actors, including business units, IT, data teams, compliance, and end users, are engaged throughout AI project lifecycles.', de:'Das Ausmaß, in dem relevante organisatorische Akteure, darunter Geschäftsbereiche, IT, Datenteams, Compliance und Endnutzer, über den gesamten KI-Projektlebenszyklus hinweg eingebunden sind.' }, opts:{ en:['Absent','Basic','Structured','Consistent','Continuous'], de:['Nicht vorhanden','Grundlegend','Strukturiert','Konsistent','Kontinuierlich'] } },
+  { id:'q15', c:'c3', l:'ia', text:{ en:'To what extent are business roles aware of data requirements and opportunities for AI?', de:'Inwieweit sind Geschäftsrollen über Datenanforderungen und -chancen für KI informiert?' }, desc:{ en:'The extent to which business roles understand data requirements for AI and actively participate in data collection and improvement.', de:'Das Ausmaß, in dem Geschäftsrollen die Datenanforderungen für KI verstehen und aktiv an der Datenerfassung und -verbesserung teilnehmen.' }, opts:{ en:['Absent','Basic','Established','Proactive','Advocacy-driven'], de:['Nicht vorhanden','Grundlegend','Etabliert','Proaktiv','Botschaftsgeleitet'] } },
+  { id:'q16', c:'c3', l:'ia', text:{ en:'To what extent do technical roles support and govern data practices for AI?', de:'Inwieweit unterstützen und steuern technische Rollen Datenpraktiken für KI?' }, desc:{ en:'The competencies and routines of technical teams to collect, structure, integrate, curate, and maintain data to meet AI quality and accessibility standards.', de:'Die Kompetenzen und Routinen technischer Teams zur Erhebung, Strukturierung, Integration, Kuratierung und Pflege von Daten zur Erfüllung von KI-Qualitäts- und Zugänglichkeitsstandards.' }, opts:{ en:['Reactive','Supportive','Standards-enforcing','Governance-leading','Continuously refining'], de:['Reaktiv','Unterstützend','Standardsetzend','Governance-führend','Kontinuierlich verfeinernd'] } },
+  { id:'q17', c:'c3', l:'dt', text:{ en:'To what extent is the data infrastructure structured and scalable for AI use?', de:'Inwieweit ist die Dateninfrastruktur strukturiert und skalierbar für den KI-Einsatz?' }, desc:{ en:'The technical systems and platforms for storing, processing, and providing access to data required for AI model development, deployment, and operation.', de:'Die technischen Systeme und Plattformen zur Speicherung, Verarbeitung und Bereitstellung von Daten, die für KI-Modellentwicklung, Deployment und Betrieb erforderlich sind.' }, opts:{ en:['Limited','Basic','Structured','Scalable','Elastic'], de:['Begrenzt','Grundlegend','Strukturiert','Skalierbar','Elastisch'] } },
+  { id:'q18', c:'c3', l:'dt', text:{ en:'To what extent is data accessible across systems and stakeholders for AI use?', de:'Inwieweit sind Daten systemübergreifend und für Stakeholder für den KI-Einsatz zugänglich?' }, desc:{ en:'The extent to which relevant data can be discovered, retrieved, and used by authorized teams and stakeholders across the organization for AI purposes.', de:'Das Ausmaß, in dem relevante Daten von autorisierten Teams und Stakeholdern in der gesamten Organisation für KI-Zwecke aufgefunden, abgerufen und genutzt werden können.' }, opts:{ en:['Limited','Siloed','Partial','Consistent','Interoperable'], de:['Begrenzt','In Silos','Partiell','Konsistent','Interoperabel'] } },
+  { id:'q19', c:'c3', l:'ip', text:{ en:'To what extent are data access & editing rights defined for data?', de:'Inwieweit sind Datenzugangs- und Bearbeitungsrechte definiert?' }, desc:{ en:'The formal policies and permissions that define who can access, use, and share specific data assets for AI development and deployment.', de:'Die formalen Richtlinien und Berechtigungen, die festlegen, wer auf bestimmte Datenassets für KI-Entwicklung und -Deployment zugreifen, diese nutzen und teilen darf.' }, opts:{ en:['Undefined','Informal','Defined','Enforced','Continuously refined'], de:['Nicht definiert','Informell','Definiert','Durchgesetzt','Kontinuierlich verfeinert'] } },
+  { id:'q20', c:'c3', l:'ip', text:{ en:'To what extent are data quality processes established to ensure reliable data for AI use?', de:'Inwieweit sind Datenqualitätsprozesse zur Sicherstellung zuverlässiger Daten für KI etabliert?' }, desc:{ en:'The organizational routines and standards for ensuring data accuracy, completeness, consistency, and reliability across the AI lifecycle.', de:'Die organisatorischen Routinen und Standards zur Sicherstellung von Datengenauigkeit, Vollständigkeit, Konsistenz und Zuverlässigkeit über den gesamten KI-Lebenszyklus hinweg.' }, opts:{ en:['Absent','Inconsistent','Basic','Reliability-driven','Continuously improved'], de:['Nicht vorhanden','Inkonsistent','Grundlegend','Zuverlässigkeitsgetrieben','Kontinuierlich verbessert'] } },
+  { id:'q21', c:'c5', l:'ia', text:{ en:'To what extent are business roles aware of and responsible for AI-related risks & ethical concerns?', de:'Inwieweit sind Geschäftsrollen über KI-bezogene Risiken und ethische Bedenken informiert und dafür verantwortlich?' }, desc:{ en:'The extent to which business stakeholders understand ethical, legal, security, privacy, and quality risks associated with AI and take responsibility for identifying and escalating them.', de:'Das Ausmaß, in dem Geschäfts-Stakeholder ethische, rechtliche, sicherheitsrelevante, datenschutzrechtliche und qualitätsbezogene Risiken im Zusammenhang mit KI verstehen und die Verantwortung für deren Identifizierung und Eskalation übernehmen.' }, opts:{ en:['Absent','Basic','Established','Consistent','Proactive'], de:['Nicht vorhanden','Grundlegend','Etabliert','Konsistent','Proaktiv'] } },
+  { id:'q22', c:'c5', l:'ia', text:{ en:'To what extent do technical roles identify, assess, and address AI-related risks & ethical concerns in practice?', de:'Inwieweit identifizieren, bewerten und adressieren technische Rollen KI-bezogene Risiken und ethische Bedenken in der Praxis?' }, desc:{ en:'The competencies and routines of technical teams to identify, assess, document, and mitigate ethical, legal, security, privacy, and quality risks throughout the AI lifecycle.', de:'Die Kompetenzen und Routinen technischer Teams zur Identifizierung, Bewertung, Dokumentation und Minderung ethischer, rechtlicher, sicherheitsrelevanter, datenschutzrechtlicher und qualitätsbezogener Risiken über den gesamten KI-Lebenszyklus hinweg.' }, opts:{ en:['Absent','Emerging','Defined','Enforced','Continuously refined'], de:['Nicht vorhanden','Entstehend','Definiert','Durchgesetzt','Kontinuierlich verfeinert'] } },
+  { id:'q23', c:'c5', l:'dt', text:{ en:'To what extent is AI ethics & risk assessment tooling established?', de:'Inwieweit sind KI-Ethik- und Risikobewertungstools etabliert?' }, desc:{ en:'The technical systems and methods for systematically evaluating AI-related risks, including model testing, bias detection, security scanning, and compliance checking.', de:'Die technischen Systeme und Methoden zur systematischen Bewertung von KI-bezogenen Risiken, einschließlich Modelltests, Bias-Erkennung, Sicherheitsscans und Compliance-Prüfungen.' }, opts:{ en:['Absent','Basic','Standard','Systematic','Automated'], de:['Nicht vorhanden','Grundlegend','Standard','Systematisch','Automatisiert'] } },
+  { id:'q24', c:'c5', l:'ip', text:{ en:'To what extent are AI ethics & risk review routines established?', de:'Inwieweit sind KI-Ethik- und Risikoüberprüfungsroutinen etabliert?' }, desc:{ en:'The organizational processes for regularly reviewing AI systems and projects to identify emerging risks and assess whether mitigation measures remain effective.', de:'Die organisatorischen Prozesse zur regelmäßigen Überprüfung von KI-Systemen und -Projekten, um aufkommende Risiken zu identifizieren und zu beurteilen, ob Minderungsmaßnahmen weiterhin wirksam sind.' }, opts:{ en:['Absent','Scattered','Defined','Consistent','Recurring'], de:['Nicht vorhanden','Verstreut','Definiert','Konsistent','Wiederkehrend'] } },
+  { id:'q25', c:'c5', l:'ip', text:{ en:'To what extent are escalation paths for AI-related risks and ethical issues established?', de:'Inwieweit sind Eskalationswege für KI-bezogene Risiken und ethische Fragen etabliert?' }, desc:{ en:'The procedures and reporting structures through which identified AI risks are communicated to appropriate decision-makers for resolution or mitigation action.', de:'Die Verfahren und Berichtsstrukturen, durch die identifizierte KI-Risiken an die zuständigen Entscheidungsträger zur Lösung oder Minderung kommuniziert werden.' }, opts:{ en:['Absent','Inconsistent','Defined','Enforced','Embedded'], de:['Nicht vorhanden','Inkonsistent','Definiert','Durchgesetzt','Eingebettet'] } },
+];
+
+let state = { profiles:[] };
+let activeProfileId = null;
+
+function initSupabase() {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+
+async function loadData() {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    state.profiles = data || [];
+  } catch(e) {
+    console.error('Load error:', e);
+  }
+}
+
+async function saveProfile(profile) {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .upsert(profile)
+      .select();
+    
+    if (error) throw error;
+    
+    return data[0];
+  } catch(e) {
+    console.error('Save error:', e);
+    return null;
+  }
+}
+
+async function deleteAllProfiles() {
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .neq('id', '');
+    
+    if (error) throw error;
+  } catch(e) {
+    console.error('Delete error:', e);
+  }
+}
+
+function handleLogin() {
+  const user = document.getElementById('login-user').value;
+  const pass = document.getElementById('login-pass').value;
+  const error = document.getElementById('login-error');
+  
+  if ((user === ADMIN_USER && pass === ADMIN_PASS) || (user === GUEST_USER && pass === GUEST_PASS)) {
+    userRole = user === ADMIN_USER ? 'admin' : 'guest';
+    error.classList.remove('show');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-root').classList.remove('hidden');
+    
+    initSupabase();
+    loadData().then(renderHome);
+  } else {
+    error.classList.add('show');
+  }
+}
+
+function setLang(l) {
+  lang = l;
+  document.querySelectorAll('[data-en]').forEach(el => {
+    el.textContent = l === 'en' ? el.dataset.en : el.dataset.de;
+  });
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.id.includes(l));
+  });
+}
+
+function renderHome() {
+  if (userRole === 'admin') {
+    document.getElementById('admin-section').style.display = 'block';
+    document.getElementById('guest-section').style.display = 'none';
+    renderAdminList();
+  } else {
+    document.getElementById('admin-section').style.display = 'none';
+    document.getElementById('guest-section').style.display = 'block';
+  }
+}
+
+function renderAdminList() {
+  const list = document.getElementById('admin-list');
+  list.innerHTML = '';
+  
+  const container = document.createElement('div');
+  container.className = 'respondent-list';
+  
+  state.profiles.forEach(p => {
+    const answered = QS.filter(q => p.responses && p.responses[q.id]).length;
+    const isComplete = answered === QS.length;
+    
+    const item = document.createElement('div');
+    item.className = 'respondent-item';
+    item.onclick = () => openSurvey(p.id);
+    
+    item.innerHTML = `
+      <div class="respondent-name">${p.name}</div>
+      <div class="respondent-role">${p.role || t('noRoleSpec')}</div>
+      <span class="respondent-status ${isComplete ? 'status-complete' : answered > 0 ? 'status-partial' : 'status-empty'}">
+        ${isComplete ? t('complete') : answered > 0 ? `${answered}/25` : t('notStarted')}
+      </span>
+    `;
+    
+    container.appendChild(item);
+  });
+  
+  list.appendChild(container);
+}
+
+function startGuestSurvey() {
+  const name = document.getElementById('guest-name').value.trim();
+  const role = document.getElementById('guest-role').value.trim();
+  
+  if (!name) {
+    document.getElementById('guest-name').focus();
+    return;
+  }
+  
+  const id = 'p' + Date.now();
+  const profile = { 
+    id, 
+    name, 
+    role, 
+    responses: {}, 
+    user_id: GUEST_USER, 
+    created_at: new Date().toISOString() 
+  };
+  
+  saveProfile(profile).then(savedProfile => {
+    if (savedProfile) {
+      state.profiles.unshift(savedProfile);
+      currentUserId = id;
+      openSurvey(id);
+    }
+  });
+}
+
+function openSurvey(pid) {
+  activeProfileId = pid;
+  const p = state.profiles.find(p => p.id === pid);
+  
+  if (!p) return;
+  
+  if (userRole === 'guest' && p.user_id !== GUEST_USER && currentUserId !== pid) {
+    alert('Access denied');
+    return;
+  }
+  
+  document.getElementById('survey-who').textContent = p.name;
+  document.getElementById('survey-org').textContent = p.role || t('noRoleSpec');
+  
+  renderSurvey(p);
+  showScreen('survey');
+}
+
+function renderSurvey(p) {
+  const body = document.getElementById('survey-body');
+  body.innerHTML = '';
+  
+  CAP.forEach(cap => {
+    const section = document.createElement('div');
+    section.className = 'cap-section';
+    
+    const header = document.createElement('div');
+    header.className = 'cap-header';
+    header.textContent = l(cap.name);
+    section.appendChild(header);
+    
+    QS.filter(q => q.c === cap.id).forEach(q => {
+      const ln = LENS.find(lens => lens.id === q.l);
+      const cur = p.responses ? p.responses[q.id] : null;
+      const opts = q.opts[lang];
+      
+      const qDiv = document.createElement('div');
+      qDiv.className = 'question';
+      
+      const qHeader = document.createElement('div');
+      qHeader.className = 'question-header';
+      
+      const lensTag = document.createElement('div');
+      lensTag.className = 'question-lens';
+      lensTag.style.background = ln.color + '22';
+      lensTag.style.color = ln.color;
+      lensTag.textContent = l(ln.name);
+      qHeader.appendChild(lensTag);
+      
+      const qText = document.createElement('div');
+      qText.className = 'question-text';
+      qText.textContent = l(q.text);
+      qHeader.appendChild(qText);
+      
+      const qDesc = document.createElement('div');
+      qDesc.className = 'question-desc';
+      qDesc.textContent = l(q.desc);
+      qHeader.appendChild(qDesc);
+      
+      qDiv.appendChild(qHeader);
+      
+      const optionsDiv = document.createElement('div');
+      optionsDiv.className = 'options';
+      optionsDiv.id = 'opts_' + q.id;
+      
+      opts.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option' + (cur === opt ? ' selected' : '');
+        btn.textContent = opt;
+        btn.onclick = () => pick(q.id, opt);
+        optionsDiv.appendChild(btn);
+      });
+      
+      const unableBtn = document.createElement('button');
+      unableBtn.className = 'option unable' + (cur === 'unable' ? ' selected' : '');
+      unableBtn.textContent = t('unable');
+      unableBtn.onclick = () => pick(q.id, 'unable');
+      optionsDiv.appendChild(unableBtn);
+      
+      qDiv.appendChild(optionsDiv);
+      section.appendChild(qDiv);
+    });
+    
+    body.appendChild(section);
+  });
+  
+  updateProgress(p);
+}
+
+function pick(qid, val) {
+  const p = state.profiles.find(p => p.id === activeProfileId);
+  if (!p) return;
+  
+  if (!p.responses) p.responses = {};
+  p.responses[qid] = val;
+  
+  const optsDiv = document.getElementById('opts_' + qid);
+  if (optsDiv) {
+    optsDiv.querySelectorAll('.option').forEach(btn => {
+      btn.classList.remove('selected');
+      if (btn.textContent === val || (val === 'unable' && btn.classList.contains('unable'))) {
+        btn.classList.add('selected');
+      }
+    });
+  }
+  
+  updateProgress(p);
+}
+
+function updateProgress(p) {
+  const answered = QS.filter(q => p.responses && p.responses[q.id]).length;
+  const total = QS.length;
+  
+  document.getElementById('prog-fill').style.width = Math.round(answered / total * 100) + '%';
+  document.getElementById('prog-label').textContent = answered + ' / ' + total;
+}
+
+function completeSurvey() {
+  const p = state.profiles.find(p => p.id === activeProfileId);
+  if (p) {
+    saveProfile(p).then(() => {
+      goHome();
+    });
+  }
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function goHome() {
+  loadData().then(renderHome);
+  showScreen('home');
+}
+
+function showResults() {
+  alert('Results view coming soon');
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'arcmm_data_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+}
+
+function resetAll() {
+  if (!confirm(lang === 'en' ? 'Reset all data?' : 'Alle Daten zurücksetzen?')) return;
+  
+  deleteAllProfiles().then(() => {
+    state = { profiles: [] };
+    renderHome();
+  });
+}
+
+document.getElementById('login-user').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleLogin();
+});
+
+document.getElementById('login-pass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleLogin();
+});
+</script>
 </body>
 </html>
